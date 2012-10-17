@@ -389,7 +389,7 @@ sub _write_headers {
 sub _format_headers {
     my ( $self, $status, $headers ) = @_;
 
-    my $hdr = sprintf "HTTP/1.0 %d %s\015\012", $status, HTTP::Status::status_message($status);
+    my $hdr = sprintf "HTTP/1.1 %d %s\015\012", $status, HTTP::Status::status_message($status);
 
     my $i = 0;
 
@@ -595,7 +595,16 @@ use AnyEvent::Handle;
 sub new {
     my ( $class, $socket, $exit ) = @_;
 
-    bless { handle => AnyEvent::Handle->new( fh => $socket ), exit_guard => $exit }, $class;
+    my $self = bless {
+        handle     => AnyEvent::Handle->new(fh => $socket),
+        exit_guard => $exit,
+    }, $class;
+
+    $self->{handle}->on_read(sub{});
+    $self->{handle}->on_error(sub {});
+    $self->{handle}->on_eof(sub {});
+
+    return $self;
 }
 
 sub write { $_[0]{handle}->push_write($_[1]) }
